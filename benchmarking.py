@@ -91,7 +91,14 @@ def multi_gpu_parallelism(file_names):
 # PyTorch DataParallel
 class TranscribeDataParallel:
     def __init__(self):
-        self.transcription_model = init_global_model("0,1")  # Use the global model
+        self.transcription_model = None
+        self.load_context()
+
+    def load_context(self):
+        self.transcription_model = WhisperModel("medium.en", 
+                                                device="cuda", 
+                                                device_index=[0, 1],  # Use a list for multi-GPU
+                                                compute_type="float16")
         self.transcription_model = torch.nn.DataParallel(self.transcription_model)
 
     def predict(self, model_input):
@@ -175,7 +182,7 @@ def ray_parallelism(file_names):
 
 def main():
     today = datetime.now().date() - timedelta(days=2)
-    dbfs_path = "/audio_files/call_sid_based"
+    dbfs_path = "audio_files/"
     file_names = [os.path.join(dbfs_path, f) for f in os.listdir(dbfs_path)][:20]
 
     # 1. Multi-GPU Parallelism (ProcessPoolExecutor)
@@ -207,7 +214,7 @@ def main():
     transcription_df = pd.DataFrame(all_transcriptions)
 
     # Save the DataFrame to Parquet format
-    save_path = f'/call_sid_based/benchmarking_results/gpu_transcriptions_benchmarking.parquet'
+    save_path = f'gpu_transcriptions_benchmarking.parquet'
     transcription_df.to_parquet(save_path, index=False)
     print(f"DataFrame successfully saved to: {save_path}")
 
