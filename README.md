@@ -1,0 +1,2 @@
+# faster_whisper_benchmarking
+Benchmarking whisper across different parallelization techniques
